@@ -2,7 +2,7 @@
  * Module tests
  */
 
-var koa = require('koa')
+var logoran = require('logoran')
   , should = require('should');
 
 describe('module', function() {

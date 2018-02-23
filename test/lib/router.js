@@ -4,7 +4,7 @@
 
 var fs = require('fs')
   , http = require('http')
-  , Koa = require('koa')
+  , Logoran = require('logoran')
   , methods = require('methods')
   , path = require('path')
   , request = require('supertest')
@@ -14,15 +14,15 @@ var fs = require('fs')
   , should = require('should');
 
 describe('Router', function () {
-  it('creates new router with koa app', function (done) {
-    var app = new Koa();
+  it('creates new router with logoran app', function (done) {
+    var app = new Logoran();
     var router = new Router();
     router.should.be.instanceOf(Router);
     done();
   });
 
   it('shares context between routers (gh-205)', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router1 = new Router();
     var router2 = new Router();
     router1.get('/', function (ctx, next) {
@@ -46,7 +46,7 @@ describe('Router', function () {
   });
 
   it('does not register middleware more than once (gh-184)', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var parentRouter = new Router();
     var nestedRouter = new Router();
 
@@ -79,7 +79,7 @@ describe('Router', function () {
   });
 
   it('router can be accecced with ctx', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router.get('home', '/', function (ctx) {
           ctx.body = {
@@ -98,7 +98,7 @@ describe('Router', function () {
   });
 
   it('registers multiple middleware for one route', function(done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
 
     router.get('/double', function(ctx, next) {
@@ -132,7 +132,7 @@ describe('Router', function () {
   });
 
   it('does not break when nested-routes use regexp paths', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var parentRouter = new Router();
     var nestedRouter = new Router();
 
@@ -157,7 +157,7 @@ describe('Router', function () {
   });
 
   it('exposes middleware factory', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     router.should.have.property('routes');
     router.routes.should.be.type('function');
@@ -168,7 +168,7 @@ describe('Router', function () {
   });
 
   it('supports promises for async/await', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     app.experimental = true;
     var router = Router();
     router.get('/async', function (ctx, next) {
@@ -194,7 +194,7 @@ describe('Router', function () {
   });
 
   it('matches middleware only if route was matched (gh-182)', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     var otherRouter = new Router();
 
@@ -221,7 +221,7 @@ describe('Router', function () {
   });
 
   it('matches first to last', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
 
     router
@@ -246,7 +246,7 @@ describe('Router', function () {
   });
 
   it('does not run subsequent middleware without calling next', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
 
     router
@@ -263,7 +263,7 @@ describe('Router', function () {
   });
 
   it('nests routers with prefixes at root', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var api = new Router();
     var forums = new Router({
       prefix: '/forums'
@@ -314,7 +314,7 @@ describe('Router', function () {
   });
 
   it('nests routers with prefixes at path', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var api = new Router();
     var forums = new Router({
       prefix: '/api'
@@ -365,7 +365,7 @@ describe('Router', function () {
   });
 
   it('runs subrouter middleware after parent', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var subrouter = Router()
       .use(function (ctx, next) {
         ctx.msg = 'subrouter';
@@ -391,7 +391,7 @@ describe('Router', function () {
   });
 
   it('runs parent middleware for subrouter routes', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var subrouter = Router()
       .get('/sub', function (ctx) {
         ctx.body = { msg: ctx.msg };
@@ -413,7 +413,7 @@ describe('Router', function () {
   });
 
   it('matches corresponding requests', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     app.use(router.routes());
     router.get('/:category/:title', function (ctx) {
@@ -454,8 +454,68 @@ describe('Router', function () {
     });
   });
 
+  it('matches corresponding requests once', function (done) {
+    var app = new Logoran();
+    var router = new Router();
+    app.use(router.routes());
+    router.get('/:category/:title', function (ctx) {
+      ctx.should.have.property('params');
+      ctx.params.should.have.property('category', 'programming');
+      ctx.params.should.have.property('title', 'how-to-node');
+      ctx.body = {name: 'first'};
+    });
+    router.get('/:category/:title', function (ctx) {
+      ctx.should.have.property('params');
+      ctx.params.should.have.property('category', 'programming');
+      ctx.params.should.have.property('title', 'how-to-node');
+      ctx.body = {name: 'second'};
+    });
+    var server = http.createServer(app.callback());
+    request(server)
+    .get('/programming/how-to-node')
+    .expect(200)
+    .end(function (err, res) {
+      if (err) return done(err);
+      expect(res.body).to.have.property('name', 'first');
+      done();
+    });
+  });
+
+  it('matches precision requests once', function (done) {
+    var app = new Logoran();
+    var router = new Router();
+    app.use(router.routes());
+    router.get('/:category/:title', function (ctx) {
+      ctx.should.have.property('params');
+      ctx.params.should.have.property('category', 'programming');
+      ctx.params.should.have.property('title', 'how-to-node');
+      ctx.body = {name: 'template'};
+    });
+    router.get('/:category/ok', function (ctx) {
+      ctx.should.have.property('params');
+      ctx.params.should.have.property('category', 'programming');
+      ctx.body = {name: 'precision'};
+    });
+    var server = http.createServer(app.callback());
+    request(server)
+    .get('/programming/how-to-node')
+    .expect(200)
+    .end(function (err, res) {
+      if (err) return done(err);
+      expect(res.body).to.have.property('name', 'template');
+    });
+    request(server)
+    .get('/programming/ok')
+    .expect(200)
+    .end(function (err, res) {
+      if (err) return done(err);
+      expect(res.body).to.have.property('name', 'precision');
+      done();
+    });
+  });
+
   it('executes route middleware using `app.context`', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     app.use(router.routes());
     router.use(function (ctx, next) {
@@ -483,7 +543,7 @@ describe('Router', function () {
   });
 
   it('does not match after ctx.throw()', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var counter = 0;
     var router = new Router();
     app.use(router.routes());
@@ -506,7 +566,7 @@ describe('Router', function () {
   });
 
   it('supports promises for route middleware', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     app.use(router.routes());
     var readVersion = function () {
@@ -534,7 +594,7 @@ describe('Router', function () {
 
   describe('Router#allowedMethods()', function () {
     it('responds to OPTIONS requests', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(router.allowedMethods());
@@ -552,7 +612,7 @@ describe('Router', function () {
     });
 
     it('responds with 405 Method Not Allowed', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router.get('/users', function () {});
       router.put('/users', function () {});
@@ -570,7 +630,7 @@ describe('Router', function () {
     });
 
     it('responds with 405 Method Not Allowed using the "throw" option', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(function (ctx, next) {
@@ -600,7 +660,7 @@ describe('Router', function () {
     });
 
     it('responds with user-provided throwable using the "throw" and "methodNotAllowed" options', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(function (ctx, next) {
@@ -647,7 +707,7 @@ describe('Router', function () {
     });
 
     it('responds with 501 Not Implemented', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(router.allowedMethods());
@@ -663,7 +723,7 @@ describe('Router', function () {
     });
 
     it('responds with 501 Not Implemented using the "throw" option', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(function (ctx, next) {
@@ -692,7 +752,7 @@ describe('Router', function () {
     });
 
     it('responds with user-provided throwable using the "throw" and "notImplemented" options', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(function (ctx, next) {
@@ -739,7 +799,7 @@ describe('Router', function () {
     });
 
     it('does not send 405 if route matched but status is 404', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(router.allowedMethods());
@@ -757,7 +817,7 @@ describe('Router', function () {
 
     it('sets the allowed methods to a single Allow header #273', function (done) {
       // https://tools.ietf.org/html/rfc7231#section-7.4.1
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       app.use(router.allowedMethods());
@@ -779,7 +839,7 @@ describe('Router', function () {
   });
 
   it('supports custom routing detect path: ctx.routerPath', function (done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     app.use(function (ctx, next) {
       // bind helloworld.example.com/users => example.com/helloworld/users
@@ -801,7 +861,7 @@ describe('Router', function () {
 
   describe('Router#[verb]()', function () {
     it('registers route specific to HTTP verb', function () {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       methods.forEach(function (method) {
@@ -851,7 +911,7 @@ describe('Router', function () {
     });
 
     it('resolves non-parameterized routes without attached parameters', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.get('/notparameter', function (ctx, next) {
@@ -882,7 +942,7 @@ describe('Router', function () {
 
   describe('Router#use()', function (done) {
     it('uses router middleware without path', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.use(function (ctx, next) {
@@ -914,7 +974,7 @@ describe('Router', function () {
     });
 
     it('uses router middleware at given path', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.use('/foo/bar', function (ctx, next) {
@@ -941,7 +1001,7 @@ describe('Router', function () {
     });
 
     it('runs router middleware before subrouter middleware', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var subrouter = new Router();
 
@@ -975,7 +1035,7 @@ describe('Router', function () {
     });
 
     it('assigns middleware to array of paths', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.use(['/foo', '/bar'], function (ctx, next) {
@@ -1015,7 +1075,7 @@ describe('Router', function () {
     });
 
     it('without path, does not set params.0 to the matched path - gh-247', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.use(function(ctx, next) {
@@ -1040,7 +1100,7 @@ describe('Router', function () {
     });
 
     it('does not add an erroneous (.*) to unprefiexed nested routers - gh-369 gh-410', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var nested = new Router();
       var called = 0;
@@ -1074,7 +1134,7 @@ describe('Router', function () {
 
   describe('Router#register()', function () {
     it('registers new routes', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router.should.have.property('register');
       router.register.should.be.type('function');
@@ -1089,7 +1149,7 @@ describe('Router', function () {
 
   describe('Router#redirect()', function () {
     it('registers redirect routes', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router.should.have.property('redirect');
       router.redirect.should.be.type('function');
@@ -1102,7 +1162,7 @@ describe('Router', function () {
     });
 
     it('redirects using route names', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get('home', '/', function () {});
@@ -1121,7 +1181,7 @@ describe('Router', function () {
 
   describe('Router#route()', function () {
     it('inherits routes from nested router', function () {
-      var app = new Koa();
+      var app = new Logoran();
       var subrouter = Router().get('child', '/hello', function (ctx) {
         ctx.body = { hello: 'world' };
       });
@@ -1132,7 +1192,7 @@ describe('Router', function () {
 
   describe('Router#url()', function () {
     it('generates URL for given route name', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get('books', '/:category/:title', function (ctx) {
@@ -1146,7 +1206,7 @@ describe('Router', function () {
     });
 
     it('generates URL for given route name within embedded routers', function (done) {
-        var app = new Koa();
+        var app = new Logoran();
         var router = new Router({
           prefix: "/books"
         });
@@ -1167,7 +1227,7 @@ describe('Router', function () {
     });
 
     it('generates URL for given route name within two embedded routers', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router({
         prefix: "/books"
       });
@@ -1189,7 +1249,7 @@ describe('Router', function () {
     });
 
     it('generates URL for given route name with params and query params', function(done) {
-        var app = new Koa();
+        var app = new Logoran();
         var router = new Router();
         router.get('books', '/books/:category/:id', function (ctx) {
           ctx.status = 204;
@@ -1213,7 +1273,7 @@ describe('Router', function () {
 
 
     it('generates URL for given route name without params and query params', function(done) {
-        var app = new Koa();
+        var app = new Logoran();
         var router = new Router();
         router.get('category', '/category', function (ctx) {
           ctx.status = 204;
@@ -1228,7 +1288,7 @@ describe('Router', function () {
 
   describe('Router#param()', function () {
     it('runs parameter middleware', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router
@@ -1252,7 +1312,7 @@ describe('Router', function () {
     });
 
     it('runs parameter middleware in order of URL appearance', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router
         .param('user', function (id, ctx, next) {
@@ -1291,7 +1351,7 @@ describe('Router', function () {
     });
 
     it('runs parameter middleware in order of URL appearance even when added in random order', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router
         // intentional random order
@@ -1330,7 +1390,7 @@ describe('Router', function () {
     });
 
     it('runs parent parameter middleware for subrouter', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var subrouter = new Router();
       subrouter.get('/:cid', function (ctx) {
@@ -1362,7 +1422,7 @@ describe('Router', function () {
 
   describe('Router#opts', function () {
     it('responds with 200', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router({
         strict: true
       });
@@ -1383,7 +1443,7 @@ describe('Router', function () {
     });
 
     it('should allow setting a prefix', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var routes = Router({ prefix: '/things/:thing_id' });
 
       routes.get('/list', function (ctx) {
@@ -1403,7 +1463,7 @@ describe('Router', function () {
     });
 
     it('responds with 404 when has a trailing slash', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router({
         strict: true
       });
@@ -1425,7 +1485,7 @@ describe('Router', function () {
 
   describe('use middleware with opts', function () {
     it('responds with 200', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router({
         strict: true
       });
@@ -1446,7 +1506,7 @@ describe('Router', function () {
     });
 
     it('responds with 404 when has a trailing slash', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router({
         strict: true
       });
@@ -1468,7 +1528,7 @@ describe('Router', function () {
 
   describe('router.routes()', function () {
     it('should return composed middleware', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var middlewareCount = 0;
       var middlewareA = function (ctx, next) {
@@ -1506,7 +1566,7 @@ describe('Router', function () {
     });
 
     it('places a `_matchedRoute` value on context', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var middleware = function (ctx, next) {
         expect(ctx._matchedRoute).to.be('/users/:id')
@@ -1535,7 +1595,7 @@ describe('Router', function () {
     });
 
     it('places a `_matchedRouteName` value on the context for a named route', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.get('users#show', '/users/:id', function (ctx, next) {
@@ -1553,7 +1613,7 @@ describe('Router', function () {
     });
 
     it('does not place a `_matchedRouteName` value on the context for unnamed routes', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
 
       router.get('/users/:id', function (ctx, next) {
@@ -1573,7 +1633,7 @@ describe('Router', function () {
 
   describe('If no HEAD method, default to GET', function () {
     it('should default to GET', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router.get('/users/:id', function (ctx) {
         should.exist(ctx.params.id);
@@ -1593,7 +1653,7 @@ describe('Router', function () {
     });
 
     it('should work with middleware', function (done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       router.get('/users/:id', function (ctx) {
         should.exist(ctx.params.id);
@@ -1636,7 +1696,7 @@ describe('Router', function () {
 
     describe('when used with .use(fn) - gh-247', function () {
       it('does not set params.0 to the matched path', function (done) {
-        var app = new Koa();
+        var app = new Logoran();
         var router = new Router();
 
         router.use(function(ctx, next) {
@@ -1672,7 +1732,7 @@ describe('Router', function () {
         var middlewareCount = 0;
 
         before(function () {
-          var app = new Koa();
+          var app = new Logoran();
           var router = Router();
 
           router.use(function (ctx, next) {

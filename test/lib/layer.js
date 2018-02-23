@@ -2,7 +2,7 @@
  * Route tests
  */
 
-var Koa = require('koa')
+var Logoran = require('logoran')
   , http = require('http')
   , request = require('supertest')
   , Router = require('../../lib/router')
@@ -11,7 +11,7 @@ var Koa = require('koa')
 
 describe('Layer', function() {
   it('composes multiple callbacks/middlware', function(done) {
-    var app = new Koa();
+    var app = new Logoran();
     var router = new Router();
     app.use(router.routes());
     router.get(
@@ -36,7 +36,7 @@ describe('Layer', function() {
 
   describe('Layer#match()', function() {
     it('captures URL path parameters', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get('/:category/:title', function (ctx) {
@@ -56,7 +56,7 @@ describe('Layer', function() {
     });
 
     it('return orginal path parameters when decodeURIComponent throw error', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get('/:category/:title', function (ctx) {
@@ -73,7 +73,7 @@ describe('Layer', function() {
     });
 
     it('populates ctx.captures with regexp captures', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get(/^\/api\/([^\/]+)\/?/i, function (ctx, next) {
@@ -97,7 +97,7 @@ describe('Layer', function() {
     });
 
     it('return orginal ctx.captures when decodeURIComponent throw error', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get(/^\/api\/([^\/]+)\/?/i, function (ctx, next) {
@@ -121,7 +121,7 @@ describe('Layer', function() {
     });
 
     it('populates ctx.captures with regexp captures include undefiend', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       router.get(/^\/api(\/.+)?/i, function (ctx, next) {
@@ -145,7 +145,7 @@ describe('Layer', function() {
     });
 
     it('should throw friendly error message when handle not exists', function() {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       app.use(router.routes());
       var notexistHandle = undefined;
@@ -165,7 +165,7 @@ describe('Layer', function() {
 
   describe('Layer#param()', function() {
     it('composes middleware for param fn', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var route = new Layer('/users/:user', ['GET'], [function (ctx) {
         ctx.body = ctx.user;
@@ -189,7 +189,7 @@ describe('Layer', function() {
     });
 
     it('ignores params which are not matched', function(done) {
-      var app = new Koa();
+      var app = new Logoran();
       var router = new Router();
       var route = new Layer('/users/:user', ['GET'], [function (ctx) {
         ctx.body = ctx.user;
