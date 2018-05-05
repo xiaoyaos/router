@@ -10,8 +10,8 @@ an issue unless you have found what you believe to be an issue with the
 way this library is written.
 
 Additionally, please ensure that your steps to reproduce your issue do not include 
-using additional third-party packages amongst `koa-router`. Your test case
-and reproduction of the issue should use `koa-router` and `koa` only.
+using additional third-party packages amongst `logoran-router`. Your test case
+and reproduction of the issue should use `logoran-router` and `logoran` only.
 
 Please fill in the information below so your issue can be understood and resolved as quickly as possible.
 -->
@@ -20,9 +20,9 @@ node.js version:
 
 npm/yarn and version: 
 
-`koa-router` version: 
+`logoran-router` version: 
 
-`koa` version: 
+`logoran` version: 
 
 #### Code sample:
 
