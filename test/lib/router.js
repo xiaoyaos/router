@@ -131,6 +131,48 @@ describe('Router', function () {
       });
   });
 
+  it('registers multiple path for one route', function(done) {
+    var app = new Logoran();
+    var router = new Router();
+
+    router.get('test', ['/first', '/second'], function(ctx, next) {
+      return new Promise(function(resolve, reject) {
+        setTimeout(function() {
+          ctx.body = {message: 'Hello'};
+          resolve(next());
+        }, 1);
+      });
+    }, function(ctx, next) {
+      return new Promise(function(resolve, reject) {
+        setTimeout(function() {
+          ctx.body.message += ' World';
+          resolve(next());
+        }, 1);
+      });
+    }, function(ctx, next) {
+      ctx.body.message += '!';
+    });
+
+    app.use(router.routes());
+
+    request(http.createServer(app.callback()))
+      .get('/first')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        expect(res.body.message).to.eql('Hello World!');
+      });
+
+    request(http.createServer(app.callback()))
+      .get('/second')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        expect(res.body.message).to.eql('Hello World!');
+        done();
+      });
+  });
+
   it('does not break when nested-routes use regexp paths', function (done) {
     var app = new Logoran();
     var parentRouter = new Router();

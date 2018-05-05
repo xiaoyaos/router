@@ -10,6 +10,7 @@
 * Responds to `OPTIONS` requests with allowed methods.
 * Support for `405 Method Not Allowed` and `501 Not Implemented`.
 * Multiple route middleware.
+* Multiple path.
 * Multiple routers.
 * Nestable routers.
 * ES7 async/await support.
@@ -141,6 +142,26 @@ Multiple middleware may be given:
 ```javascript
 router.get(
   '/users/:id',
+  (ctx, next) => {
+    return User.findOne(ctx.params.id).then(function(user) {
+      ctx.user = user;
+      next();
+    });
+  },
+  ctx => {
+    console.log(ctx.user);
+    // => { id: 17, name: "Alex" }
+  }
+);
+```
+
+#### Multiple path
+
+Multiple path may be given:
+
+```javascript
+router.get(
+  ['/users/:id', '/staffs/:id'],
   (ctx, next) => {
     return User.findOne(ctx.params.id).then(function(user) {
       ctx.user = user;
