@@ -1880,10 +1880,10 @@ describe('Router', function () {
     });
   });
 
-  it('use lazy middleware factory before routers', function (done) {
+  it('use follow middleware factory before routers', function (done) {
     var app = new Logoran();
     var router = new Router();
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return function (ctx, next) {
@@ -1906,10 +1906,10 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy unreturn middleware factory before routers', function (done) {
+  it('use follow unreturn middleware factory before routers', function (done) {
     var app = new Logoran();
     var router = new Router();
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return undefined;
@@ -1929,14 +1929,14 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy middleware factory after routers', function (done) {
+  it('use follow middleware factory after routers', function (done) {
     var app = new Logoran();
     var router = new Router();
     router.get('/sub', function (ctx, next) {
       ctx.foo = 'bar';
       return next();
     });
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return function (ctx, next) {
@@ -1955,14 +1955,14 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy factory unreturn middleware after routers', function (done) {
+  it('use follow factory unreturn middleware after routers', function (done) {
     var app = new Logoran();
     var router = new Router();
     router.get('/sub', function (ctx, next) {
       ctx.body = { baz: 'qux' };
       return next();
     });
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return undefined;
@@ -1978,11 +1978,11 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy middleware factory before sub routers', function (done) {
+  it('use follow middleware factory before sub routers', function (done) {
     var app = new Logoran();
     var router = new Router();
     var sub = new Router();
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return function (ctx, next) {
@@ -2006,11 +2006,11 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy unreturn middleware factory before sub routers', function (done) {
+  it('use follow unreturn middleware factory before sub routers', function (done) {
     var app = new Logoran();
     var router = new Router();
     var sub = new Router();
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return undefined;
@@ -2031,7 +2031,7 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy middleware factory after sub routers', function (done) {
+  it('use follow middleware factory after sub routers', function (done) {
     var app = new Logoran();
     var router = new Router();
     var sub = new Router();
@@ -2040,7 +2040,7 @@ describe('Router', function () {
       return next();
     });
     router.use(sub.routes());
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return function (ctx, next) {
@@ -2059,7 +2059,7 @@ describe('Router', function () {
       });
   });
 
-  it('use lazy factory unreturn middleware after sub routers', function (done) {
+  it('use follow factory unreturn middleware after sub routers', function (done) {
     var app = new Logoran();
     var router = new Router();
     var sub = new Router();
@@ -2068,7 +2068,7 @@ describe('Router', function () {
       return next();
     });
     router.use(sub.routes());
-    router.lazy(function (matched) {
+    router.follow(function (matched) {
       expect(matched.path).to.equal('/sub');
       expect(matched.methods).to.contain('GET');
       return undefined;
