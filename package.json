@@ -10,7 +10,7 @@
     "lib"
   ],
   "author": "Leo <yujunlong2000@gmail.com>",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "keywords": [
     "logoran",
     "middleware",
@@ -35,7 +35,6 @@
   },
   "scripts": {
     "test": "NODE_ENV=test mocha test/**/*.js",
-    "test2": "NODE_ENV=test mocha test/lib/router.js",
     "docs": "NODE_ENV=test jsdoc2md -t ./lib/README_tpl.hbs --src ./lib/*.js  >| README.md"
   },
   "engines": {

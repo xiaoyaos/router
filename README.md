@@ -10,7 +10,7 @@
 * Responds to `OPTIONS` requests with allowed methods.
 * Support for `405 Method Not Allowed` and `501 Not Implemented`.
 * Multiple route middleware.
-* Multiple path.
+* Multiple paths.
 * Multiple routers.
 * Nestable routers.
 * ES7 async/await support.
@@ -18,7 +18,7 @@
 ## Migrating to 7 / Logoran 1
 
 - The API has changed to match the new promise-based middleware
-  signature of logoran 2. See the
+  signature of logoran. See the
   [logoran 1.x readme](https://github.com/logoran/logoran/tree/1.0.0) for more
   information.
 - Middleware is now always run in the order declared by `.use()` (or `.get()`,
@@ -47,6 +47,7 @@ npm install logoran-router
             * [.route(name)](#module_logoran-router--Router+route) ⇒ <code>Layer</code> &#124; <code>false</code>
             * [.url(name, params, [options])](#module_logoran-router--Router+url) ⇒ <code>String</code> &#124; <code>Error</code>
             * [.param(param, middleware)](#module_logoran-router--Router+param) ⇒ <code>Router</code>
+            * [.follow(factory)](#module_logoran-router--Router+follow) ⇒ <code>Router</code>
         * _static_
             * [.url(path, params)](#module_logoran-router--Router.url) ⇒ <code>String</code>
 
@@ -155,9 +156,9 @@ router.get(
 );
 ```
 
-#### Multiple path
+#### Multiple paths
 
-Multiple path may be given:
+Multiple paths may be given:
 
 ```javascript
 router.get(
@@ -432,9 +433,41 @@ router
   // /users/3 => {"id": 3, "name": "Alex"}
   // /users/3/friends => [{"id": 4, "name": "TJ"}]
 ```
+<a name="module_logoran-router--Router+follow"></a>
+
+#### router.follow(factory) ⇒ <code>Router</code>
+Run follow factory for middleware with matched. Useful for auto-loading or validation.
+
+**Kind**: instance method of <code>[Router](#exp_module_logoran-router--Router)</code>  
+
+| Param | Type |
+| --- | --- |
+| factory | <code>function</code> | 
+
+**Example**  
+```javascript
+router
+  .follow((matched) => {
+    return (ctx, next) => {
+      ctx.user = users[ctx.params.user];
+      if (!ctx.user) return ctx.status = 404;
+      return next();
+    }
+  })
+  .get('/users/:user', ctx => {
+    ctx.body = ctx.user;
+  })
+  .get('/users/:user/friends', ctx => {
+    return ctx.user.getFriends().then(function(friends) {
+      ctx.body = friends;
+    });
+  })
+  // /users/3 => {"id": 3, "name": "Alex"}
+  // /users/3/friends => [{"id": 4, "name": "TJ"}]
+```
 <a name="module_logoran-router--Router.url"></a>
 
-#### Router.url(path, params [, options]) ⇒ <code>String</code>
+#### Router.url(path, params) ⇒ <code>String</code>
 Generate URL from url pattern and given `params`.
 
 **Kind**: static method of <code>[Router](#exp_module_logoran-router--Router)</code>  
@@ -443,20 +476,15 @@ Generate URL from url pattern and given `params`.
 | --- | --- | --- |
 | path | <code>String</code> | url pattern |
 | params | <code>Object</code> | url parameters |
-| [options] | <code>Object</code> | options parameter |
-| [options.query] | <code>Object</code> &#124; <code>String</code> | query options |
 
 **Example**  
 ```javascript
 var url = Router.url('/users/:id', {id: 1});
 // => "/users/1"
-
-const url = Router.url('/users/:id', {id: 1}, {query: { active: true }});
-// => "/users/1?active=true"
 ```
 ## Contributing
 
-Please submit all issues and pull requests to the [alexmingoia/logoran-router](http://github.com/alexmingoia/logoran-router) repository!
+Please submit all issues and pull requests to the [logoran/router](http://github.com/logoran/router) repository!
 
 ## Tests
 
@@ -464,4 +492,4 @@ Run tests using `npm test`.
 
 ## Support
 
-If you have any problem or suggestion please open an issue [here](https://github.com/alexmingoia/logoran-router/issues).
+If you have any problem or suggestion please open an issue [here](https://github.com/logoran/router/issues).
