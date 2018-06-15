@@ -1906,6 +1906,32 @@ describe('Router', function () {
       });
   });
 
+  it('use follow middleware factory with inject position', function (done) {
+    var app = new Logoran();
+    var router = new Router();
+    router.get('/sub', function (ctx, next) {
+      ctx.body = { foo: ctx.foo };
+      return next();
+    });
+    router.follow(function (matched) {
+      expect(matched.path).to.equal('/sub');
+      expect(matched.methods).to.contain('GET');
+      return [function (ctx, next) {
+        ctx.foo = 'bar';
+        return next();
+      }, 0];
+    });
+    app.use(router.routes());
+    request(http.createServer(app.callback()))
+      .get('/sub')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        expect(res.body).to.have.property('foo', 'bar');
+        done();
+      });
+  });
+
   it('use follow unreturn middleware factory before routers', function (done) {
     var app = new Logoran();
     var router = new Router();

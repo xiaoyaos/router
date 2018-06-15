@@ -448,11 +448,21 @@ Run follow factory for middleware with matched. Useful for auto-loading or valid
 ```javascript
 router
   .follow((matched) => {
+    // matched.path is the full path of url
+    // matched.metheds is the allowed http methods
+    // matched.name is the name of the request
+    // matched.stack is the all middlewares
     return (ctx, next) => {
       ctx.user = users[ctx.params.user];
       if (!ctx.user) return ctx.status = 404;
       return next();
     }
+    // or return middleware and position.
+    // return [(ctx, next) => {
+    //   ctx.user = users[ctx.params.user];
+    //   if (!ctx.user) return ctx.status = 404;
+    //   return next();
+    // }, 0];
   })
   .get('/users/:user', ctx => {
     ctx.body = ctx.user;
